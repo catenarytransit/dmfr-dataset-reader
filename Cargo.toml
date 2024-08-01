@@ -1,5 +1,5 @@
 [package]
-name = "dmfr-folder-reader"
+name = "dmfr-dataset-reader"
 version = "0.2.0"
 edition = "2021"
 description = "Reads transitland folder and outputs graph of valid feeds and operators"
