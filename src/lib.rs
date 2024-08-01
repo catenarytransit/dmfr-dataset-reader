@@ -24,11 +24,13 @@ pub struct FeedPairInfo {
 pub type FeedId = String;
 pub type OperatorId = String;
 
+#[derive(Debug)]
 pub struct ReturnDmfrAnalysis {
     pub feed_hashmap: HashMap<FeedId, dmfr::Feed>,
     pub operator_hashmap: HashMap<OperatorId, dmfr::Operator>,
     pub operator_to_feed_hashmap: HashMap<OperatorId, Vec<FeedPairInfo>>,
     pub feed_to_operator_pairs_hashmap: HashMap<FeedId, Vec<OperatorPairInfo>>,
+    pub list_of_bad_files: Option<Vec<String>>
 }
 
 pub fn process_feed(
@@ -169,6 +171,8 @@ pub fn read_folders(path: &str) -> Result<ReturnDmfrAnalysis, Box<dyn Error + Se
     let mut operator_to_feed_hashmap: HashMap<OperatorId, Vec<FeedPairInfo>> = HashMap::new();
     let mut feed_to_operator_pairs_hashmap: HashMap<FeedId, Vec<OperatorPairInfo>> = HashMap::new();
 
+    let mut list_of_bad_files:Vec<String> = vec![];
+
     for entry in feed_entries {
         if let Ok(entry) = entry {
             if let Some(file_name) = entry.file_name().to_str() {
@@ -207,7 +211,9 @@ pub fn read_folders(path: &str) -> Result<ReturnDmfrAnalysis, Box<dyn Error + Se
                             );
                         }
                     }
-                    Err(_) => {}
+                    Err(_) => {
+                        list_of_bad_files.push(file_name.to_string());
+                    }
                 }
             }
         }
@@ -246,35 +252,36 @@ pub fn read_folders(path: &str) -> Result<ReturnDmfrAnalysis, Box<dyn Error + Se
         }
     }
 
-    let operator_entries = fs::read_dir(format!("{}/operators/switzerland/", path))
-        .expect("Transitland atlas missing");
+    let operator_entries = fs::read_dir(format!("{}/operators/switzerland/", path));
 
-    for operator_file in operator_entries {
-        if let Ok(operator_file) = operator_file {
-            if let Some(file_name) = operator_file.file_name().to_str() {
-                let contents =
-                    fs::read_to_string(format!("{}/operators/switzerland/{}", path, file_name));
-                if contents.is_err() {
-                    eprintln!(
-                        "Error Reading Swiss Operator File {}: {}",
-                        file_name,
-                        contents.unwrap_err()
-                    );
-                    continue;
-                }
+    if let Some(operator_entries) = operator_entries.ok() {
+        for operator_file in operator_entries {
+            if let Ok(operator_file) = operator_file {
+                if let Some(file_name) = operator_file.file_name().to_str() {
+                    let contents =
+                        fs::read_to_string(format!("{}/operators/switzerland/{}", path, file_name));
+                    if contents.is_err() {
+                        eprintln!(
+                            "Error Reading Swiss Operator File {}: {}",
+                            file_name,
+                            contents.unwrap_err()
+                        );
+                        continue;
+                    }
 
-                let operator: Result<dmfr::Operator, SerdeError> =
-                    serde_json::from_str(&contents.unwrap());
+                    let operator: Result<dmfr::Operator, SerdeError> =
+                        serde_json::from_str(&contents.unwrap());
 
-                if let Ok(operator) = operator {
-                    process_operator(
-                        &operator,
-                        &mut feed_hashmap,
-                        &mut operator_hashmap,
-                        &mut operator_to_feed_hashmap,
-                        &mut feed_to_operator_pairs_hashmap,
-                        None,
-                    );
+                    if let Ok(operator) = operator {
+                        process_operator(
+                            &operator,
+                            &mut feed_hashmap,
+                            &mut operator_hashmap,
+                            &mut operator_to_feed_hashmap,
+                            &mut feed_to_operator_pairs_hashmap,
+                            None,
+                        );
+                    }
                 }
             }
         }
@@ -287,6 +294,7 @@ pub fn read_folders(path: &str) -> Result<ReturnDmfrAnalysis, Box<dyn Error + Se
         operator_hashmap,
         operator_to_feed_hashmap,
         feed_to_operator_pairs_hashmap,
+        list_of_bad_files: Some(list_of_bad_files)
     })
 }
 
@@ -296,7 +304,8 @@ mod tests {
 
     #[test]
     fn test() {
-        let dmfr_result = read_folders("transitland-atlas/");
+        println!("MAIN TEST");
+        let dmfr_result = read_folders("transitland-atlas/").unwrap();
 
         assert!(dmfr_result.feed_hashmap.len() > 1000);
 
