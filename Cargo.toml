@@ -2,6 +2,8 @@
 name = "dmfr-folder-reader"
 version = "0.2.0"
 edition = "2021"
+description = "Reads transitland folder and outputs graph of valid feeds and operators"
+license = "AGPL-3.0-or-later"
 
 [dependencies]
 dmfr = "0.1.0"
