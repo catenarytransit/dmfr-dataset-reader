@@ -10,9 +10,9 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "dmfr"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77e2bf91459fed5778f450c4d3c75fd741bf5eb147acf04fac430e33fbfd5355"
+checksum = "14b79a83884d85952142287f51bab8f54e5b812a5a8a7b5fd0a991faf39489c9"
 dependencies = [
  "regress",
  "serde",
@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "dmfr-dataset-reader"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "dmfr",
  "serde",
