@@ -6,6 +6,6 @@ description = "Reads transitland folder and outputs graph of valid feeds and ope
 license = "AGPL-3.0-or-later"
 
 [dependencies]
-dmfr = "0.1.2"
+dmfr = "0.2.0"
 serde = "1.0"
 serde_json = "1.0"
