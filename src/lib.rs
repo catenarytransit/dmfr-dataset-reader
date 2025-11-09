@@ -1,7 +1,6 @@
 /// Copyright: Kyler Chin <kyler@catenarymaps.org>
 /// Catenary Transit Initiatives
 /// Removal of the attribution is not allowed, as covered under the AGPL license
-
 use dmfr::*;
 use serde_json::Error as SerdeError;
 use std::collections::{HashMap, HashSet};
@@ -30,7 +29,7 @@ pub struct ReturnDmfrAnalysis {
     pub operator_hashmap: HashMap<OperatorId, dmfr::Operator>,
     pub operator_to_feed_hashmap: HashMap<OperatorId, Vec<FeedPairInfo>>,
     pub feed_to_operator_pairs_hashmap: HashMap<FeedId, Vec<OperatorPairInfo>>,
-    pub list_of_bad_files: Option<Vec<String>>
+    pub list_of_bad_files: Option<Vec<String>>,
 }
 
 pub fn process_feed(
@@ -109,17 +108,24 @@ pub fn process_operator(
         .or_insert(operator.clone());
 
     for associated_feed in operator.associated_feeds.iter() {
-        let mut associated_feed_insertion: FeedPairInfo =
-            match associated_feed.feed_onestop_id.as_ref() {
-                Some(feed_onestop_id) => FeedPairInfo {
-                    feed_onestop_id: feed_onestop_id.clone(),
-                    gtfs_agency_id: associated_feed.feed_onestop_id.clone(),
+        let associated_feed_insertion: FeedPairInfo = match associated_feed.feed_onestop_id.as_ref()
+        {
+            Some(feed_onestop_id) => FeedPairInfo {
+                feed_onestop_id: feed_onestop_id.clone(),
+                gtfs_agency_id: associated_feed.feed_onestop_id.clone(),
+            },
+            None => FeedPairInfo {
+                feed_onestop_id: {
+                    if let Some(parent_feed_id) = parent_feed_id {
+                        parent_feed_id.to_string()
+                    } else {
+                        eprintln!("Warning: Operator {} has associated feed with no feed_onestop_id and no parent feed id", operator.onestop_id);
+                        String::from("unknown-feed-onestop-id")
+                    }
                 },
-                None => FeedPairInfo {
-                    feed_onestop_id: String::from(*parent_feed_id.as_ref().unwrap()),
-                    gtfs_agency_id: associated_feed.feed_onestop_id.clone(),
-                },
-            };
+                gtfs_agency_id: associated_feed.feed_onestop_id.clone(),
+            },
+        };
 
         //if associated_feed_insertion.feed_onestop_id == Some(String::from("f-ucla~bruinbus~rt")) {
         //    println!("Bruin realtime feed found! {:?}", associated_feed_insertion);
@@ -171,7 +177,7 @@ pub fn read_folders(path: &str) -> Result<ReturnDmfrAnalysis, Box<dyn Error + Se
     let mut operator_to_feed_hashmap: HashMap<OperatorId, Vec<FeedPairInfo>> = HashMap::new();
     let mut feed_to_operator_pairs_hashmap: HashMap<FeedId, Vec<OperatorPairInfo>> = HashMap::new();
 
-    let mut list_of_bad_files:Vec<String> = vec![];
+    let mut list_of_bad_files: Vec<String> = vec![];
 
     for entry in feed_entries {
         if let Ok(entry) = entry {
@@ -226,7 +232,7 @@ pub fn read_folders(path: &str) -> Result<ReturnDmfrAnalysis, Box<dyn Error + Se
         operator_hashmap,
         operator_to_feed_hashmap,
         feed_to_operator_pairs_hashmap,
-        list_of_bad_files: Some(list_of_bad_files)
+        list_of_bad_files: Some(list_of_bad_files),
     })
 }
 
